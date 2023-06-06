@@ -1,0 +1,213 @@
+<script>
+import { renderSync } from 'sass';
+
+export default {
+  data() {
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    return {
+      localStartDate: today.toISOString().split("T")[0],
+      localEndDate: nextWeek.toISOString().split("T")[0],
+      today: today,
+      questionnaireList: [],
+      page: [],
+    }
+  },
+  methods: {
+    newQuestionnaire() {
+      sessionStorage.removeItem("questionnaire")
+      this.$router.push("/manage")
+    },
+    getData() {
+      //依條件進行搜尋的方法
+    },
+    getByTitle(title) {
+      fetch("http://localhost:8080/findByTitle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: title,
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.code === "200") {
+            sessionStorage.setItem("questionnaire", JSON.stringify(data.questionnaire));
+          } else {
+            alert(data.message)
+          }
+        }).then(() => {
+          fetch("http://localhost:8080/findQuestionsByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: sessionStorage.getItem("questionnaire")
+          }).then(res => res.json())
+            .then(data => {
+              sessionStorage.setItem("questionList", JSON.stringify(data))
+              this.$router.push("/manage")
+            }).catch(err => alert(err))
+        })
+    },
+    changePage(index) {
+      fetch("http://localhost:8080/findQuestionnairesPage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: index
+      }).then(res => res.json())
+        .then(data => {
+          console.log(data)
+        })
+    },
+  },
+  mounted() {
+    fetch("http://localhost:8080/getHowManyData", {
+    }).then(res => res.json())
+      .then(data => {
+        if (data && data.code === "200") {
+          console.log(data);
+          this.questionnaireList = data.questionnaireList;
+          //根據資料筆數除以10以生成頁數的陣列
+          for (let i = 0; i < data.dataCount / 10; i++) {
+            this.page.push(i)
+          }
+          console.log(this.page)
+        }
+      })
+    console.log(this.localStartDate)
+  },
+}
+</script>
+
+<template>
+  <div class="home">
+    <div class="search-area">
+      <div class="search title">
+        <label for="title">標題</label>
+        <input type="text" name="title" id="title">
+      </div>
+      <div class="search date">
+        <label for="start-date">開始日期</label>
+        <input type="date" name="start-date" id="start-date" v-model="localStartDate">
+        <label for="end-date">結束日期</label>
+        <input type="date" name="end-date" id="end-date" v-model="localEndDate">
+      </div>
+      <button type="submit" class="btn btn-primary" @click="getData">search</button>
+    </div>
+    <button type="submit" class="btn btn-primary" @click="newQuestionnaire">新增問卷</button>
+    <div class="questionnaire-area">
+      <div class="row row-header">
+        <div class="col check"> </div>
+        <div class="col number"># </div>
+        <div class="col head-title ">問卷標題 </div>
+        <div class="col status">狀態 </div>
+        <div class="col start">開始日期 </div>
+        <div class="col end">結束日期 </div>
+        <div class="col report"> 統計 </div>
+      </div>
+      <div class="row" v-for="(questionnaire, index) in questionnaireList">
+        <div class="col check"> <input type="checkbox"> </div>
+        <div class="col number"> {{ questionnaire.id }} </div>
+        <div class="col title" @click="getByTitle(questionnaire.title)"> {{ questionnaire.title }}</div>
+        <div class="col status">
+          <span v-if="new Date(questionnaire.startDate) < today &&
+            new Date(localStartDate) < new Date(questionnaire.endDate)">
+            進行中</span>
+          <span v-else-if="new Date(questionnaire.endDate) < today">已結束</span>
+          <span v-else-if="new Date(questionnaire.startDate) > today">未開始</span>
+        </div>
+        <div class="col start"> {{ questionnaire.startDate.substring(0, 10) }} </div>
+        <div class="col end"> {{ questionnaire.endDate.substring(0, 10) }} </div>
+        <div class="col report"> report </div>
+      </div>
+    </div>
+    <div class="page-area">
+      <button class="page-btn" v-for="(p, index) in page" @click="changePage(index)">{{ p + 1 }}</button>
+    </div>
+  </div>
+</template>
+<style lang="scss" scoped>
+.home {
+  margin: 48px;
+}
+
+.search-area {
+  border: 1px black solid;
+  border-radius: 12px;
+  height: 168px;
+  min-width: 768px;
+}
+
+.questionnaire-area {
+  margin-top: 48px;
+  border: 1px black solid;
+  min-width: 768px;
+
+  .row-header {
+    border-bottom: 1px black solid;
+  }
+
+  .row {
+    width: 100%;
+    margin: 0;
+
+    .col {
+      border-right: 1px black solid;
+    }
+
+    .check {
+      max-width: 32px;
+    }
+
+    .number {
+      max-width: 64px;
+    }
+
+    .head-title {
+      min-width: 256px;
+    }
+
+    .title {
+      min-width: 256px;
+      cursor: pointer;
+
+      &:hover {
+        color: white;
+        background-color: cornflowerblue
+      }
+    }
+
+    .status {
+      max-width: 84px;
+    }
+
+    .start {
+      min-width: 128px;
+    }
+
+    .end {
+      min-width: 128px;
+    }
+  }
+
+
+}
+
+.page-area {
+  display: flex;
+  justify-content: center;
+
+  .page-btn {
+    text-align: center;
+    padding: 0;
+    background: none;
+    border: none;
+    border-bottom: 1px solid blue;
+    color: blue;
+    margin: 8px 8px;
+  }
+}
+</style>
