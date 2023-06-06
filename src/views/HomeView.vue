@@ -1,6 +1,4 @@
 <script>
-import { renderSync } from 'sass';
-
 export default {
   data() {
     const today = new Date();
@@ -11,6 +9,7 @@ export default {
       today: today,
       questionnaireList: [],
       page: [],
+      selectedIndex: null,
     }
   },
   methods: {
@@ -51,6 +50,7 @@ export default {
         })
     },
     changePage(index) {
+
       fetch("http://localhost:8080/findQuestionnairesPage", {
         method: "POST",
         headers: {
@@ -60,7 +60,19 @@ export default {
       }).then(res => res.json())
         .then(data => {
           console.log(data)
+          this.questionnaireList = data;
+          this.selectedIndex = index;
         })
+    },
+    backPage() {
+      if (this.selectedIndex > 0) {
+        this.changePage(this.selectedIndex - 1)
+      }
+    },
+    nextPage() {
+      if (this.selectedIndex < this.page.length) {
+        this.changePage(this.selectedIndex + 1)
+      }
     },
   },
   mounted() {
@@ -74,7 +86,8 @@ export default {
           for (let i = 0; i < data.dataCount / 10; i++) {
             this.page.push(i)
           }
-          console.log(this.page)
+          this.selectedIndex = 0;
+          console.log(this.page);
         }
       })
     console.log(this.localStartDate)
@@ -125,7 +138,10 @@ export default {
       </div>
     </div>
     <div class="page-area">
-      <button class="page-btn" v-for="(p, index) in page" @click="changePage(index)">{{ p + 1 }}</button>
+      <button class="page-btn page" @click="backPage" v-if="selectedIndex > 0">&#60;</button>
+      <button class="page-btn page" v-for="(p, index) in page" @click="changePage(index)"
+        :class="{ 'selected': selectedIndex === index }">{{ p + 1 }}</button>
+      <button class="page-btn page" @click="nextPage" v-if="selectedIndex+1 < page.length">&#62;</button>
     </div>
   </div>
 </template>
@@ -145,6 +161,7 @@ export default {
   margin-top: 48px;
   border: 1px black solid;
   min-width: 768px;
+  height: 268px;
 
   .row-header {
     border-bottom: 1px black solid;
@@ -153,6 +170,11 @@ export default {
   .row {
     width: 100%;
     margin: 0;
+
+
+    &:nth-child(even) {
+      background-color: aliceblue;
+    }
 
     .col {
       border-right: 1px black solid;
@@ -208,6 +230,12 @@ export default {
     border-bottom: 1px solid blue;
     color: blue;
     margin: 8px 8px;
+  }
+
+  .selected {
+    color: black;
+    border: none;
+    pointer-events: none;
   }
 }
 </style>

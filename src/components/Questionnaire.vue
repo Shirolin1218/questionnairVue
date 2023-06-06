@@ -110,9 +110,9 @@ export default {
                 </div>
             </div>
             <div class="btn-area">
-                <button type="submit" class="btn btn-secondary" @click="cancel">取消</button>
-                <button type="button" class="btn btn-primary" @click="updateData" v-if="isExist">更新</button>
-                <button type="button" class="btn btn-primary" @click="newData" v-else>新增</button>
+                <button type="submit" class="btn btn-secondary" @click="cancel" v-if="!isEnd">取消</button>
+                <button type="button" class="btn btn-primary" @click="updateData" v-if="isExist && !isEnd">更新</button>
+                <button type="button" class="btn btn-primary" @click="newData" v-else v-if="!isEnd">新增</button>
             </div>
         </form>
     </div>
@@ -127,6 +127,7 @@ export default {
 
     #input-description {
         height: 96px;
+        max-height: 300px;
     }
 
     .input-date {
