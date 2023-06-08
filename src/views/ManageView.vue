@@ -80,10 +80,10 @@ export default {
                 </Question>
             </div>
             <div v-show="activeTab === 'report'">
-                問卷回饋的內容
+                <h1>問卷回饋未完成</h1> 
             </div>
             <div v-show="activeTab === 'statistic'">
-                統計的內容
+                <h1>統計未完成</h1> 
             </div>
         </div>
     </div>

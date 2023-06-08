@@ -224,7 +224,6 @@ export default {
             </div>
         </form>
     </div>
-    <button type="button" @click="test">test</button>
 </template>
 <style lang="scss" scoped>
 .question {

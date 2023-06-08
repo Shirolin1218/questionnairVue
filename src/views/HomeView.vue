@@ -24,17 +24,18 @@ export default {
       sessionStorage.removeItem("questionnaire")
       this.$router.push("/manage")
     },
-
-    searchData(title, inputStartDate, inputEndDate) {
+    setCondition(title, inputStartDate, inputEndDate) {
       //設定搜尋條件
       this.searchCondition.title = title;
       this.searchCondition.startDate = inputStartDate;
       this.searchCondition.endDate = inputEndDate;
       this.searchCondition.isActive = true;
-
+      this.searchData(0);
+    },
+    searchData(index) {
       const body = {
         questionnaire: this.searchCondition,
-        page: this.selectedIndex,
+        page: index,
       }
       fetch("http://localhost:8080/searchQuestionnaires", {
         method: "POST",
@@ -52,7 +53,7 @@ export default {
             for (let i = 0; i < data.dataCount / 10; i++) {
               this.page.push(i)
             }
-            this.selectedIndex = 0;
+            this.selectedIndex = index;
             console.log(this.page);
           }
         })
@@ -88,19 +89,22 @@ export default {
         })
     },
     changePage(index) {
-      fetch("http://localhost:8080/findQuestionnairesPage", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: index
-      }).then(res => res.json())
-        .then(data => {
-          console.log(data)
-          this.questionnaireList = data;
-          this.selectedIndex = index;
-        })
-
+      if (!this.searchCondition.isActive) {
+        fetch("http://localhost:8080/findQuestionnairesPage", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: index
+        }).then(res => res.json())
+          .then(data => {
+            console.log(data)
+            this.questionnaireList = data;
+            this.selectedIndex = index;
+          })
+      } else {
+        this.searchData(index);
+      }
     },
     backPage() {
       if (this.selectedIndex > 0) {
@@ -148,7 +152,7 @@ export default {
         <input type="date" name="end-date" id="end-date" v-model="inputEndDate">
       </div>
       <button type="submit" class="btn btn-primary"
-        @click="searchData(title, inputStartDate, inputEndDate)">search</button>
+        @click="setCondition(title, inputStartDate, inputEndDate)">search</button>
     </div>
     <button type="submit" class="btn btn-primary" @click="newQuestionnaire">新增問卷</button>
     <div class="questionnaire-area">
@@ -167,14 +171,14 @@ export default {
         <div class="col title" @click="getByTitle(questionnaire.title)"> {{ questionnaire.title }}</div>
         <div class="col status">
           <span v-if="new Date(questionnaire.startDate) < today &&
-            new Date(inputStartDate) < new Date(questionnaire.endDate)">
+            new Date(questionnaire.startDate) < new Date(questionnaire.endDate)">
             進行中</span>
           <span v-else-if="new Date(questionnaire.endDate) < today">已結束</span>
           <span v-else-if="new Date(questionnaire.startDate) > today">未開始</span>
         </div>
         <div class="col start"> {{ questionnaire.startDate.substring(0, 10) }} </div>
         <div class="col end"> {{ questionnaire.endDate.substring(0, 10) }} </div>
-        <div class="col report"> report </div>
+        <div class="col report"> report未完成 </div>
       </div>
     </div>
     <div class="page-area">
