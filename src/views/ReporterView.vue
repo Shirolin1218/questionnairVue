@@ -4,19 +4,12 @@ export default {
     const today = new Date();
     const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
     return {
-      title: "",
-      inputStartDate: today.toISOString().split("T")[0],
-      inputEndDate: nextWeek.toISOString().split("T")[0],
+      localStartDate: today.toISOString().split("T")[0],
+      localEndDate: nextWeek.toISOString().split("T")[0],
       today: today,
       questionnaireList: [],
       page: [],
       selectedIndex: null,
-      searchCondition: {
-        title: "",
-        startDate: null,
-        endDate: null,
-        isActive: false,
-      }
     }
   },
   methods: {
@@ -24,39 +17,8 @@ export default {
       sessionStorage.removeItem("questionnaire")
       this.$router.push("/manage")
     },
-
-    searchData(title, inputStartDate, inputEndDate) {
-      //設定搜尋條件
-      this.searchCondition.title = title;
-      this.searchCondition.startDate = inputStartDate;
-      this.searchCondition.endDate = inputEndDate;
-      this.searchCondition.isActive = true;
-
-      const body = {
-        questionnaire: this.searchCondition,
-        page: this.selectedIndex,
-      }
-      fetch("http://localhost:8080/searchQuestionnaires", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body)
-      }).then(res => res.json())
-        .then(data => {
-          console.log(data)
-          if (data && data.code === "200") {
-            this.questionnaireList = data.questionnaireList;
-            this.page = []
-            //根據資料筆數除以10以生成頁數的陣列
-            for (let i = 0; i < data.dataCount / 10; i++) {
-              this.page.push(i)
-            }
-            this.selectedIndex = 0;
-            console.log(this.page);
-          }
-        })
-
+    getData() {
+      //依條件進行搜尋的方法
     },
     getByTitle(title) {
       fetch("http://localhost:8080/findByTitle", {
@@ -88,6 +50,7 @@ export default {
         })
     },
     changePage(index) {
+
       fetch("http://localhost:8080/findQuestionnairesPage", {
         method: "POST",
         headers: {
@@ -100,12 +63,10 @@ export default {
           this.questionnaireList = data;
           this.selectedIndex = index;
         })
-
     },
     backPage() {
       if (this.selectedIndex > 0) {
         this.changePage(this.selectedIndex - 1)
-
       }
     },
     nextPage() {
@@ -129,7 +90,7 @@ export default {
           console.log(this.page);
         }
       })
-    console.log(this.inputStartDate)
+    console.log(this.localStartDate)
   },
 }
 </script>
@@ -139,16 +100,15 @@ export default {
     <div class="search-area">
       <div class="search title">
         <label for="title">標題</label>
-        <input type="text" name="title" id="title" v-model="title">
+        <input type="text" name="title" id="title">
       </div>
       <div class="search date">
         <label for="start-date">開始日期</label>
-        <input type="date" name="start-date" id="start-date" v-model="inputStartDate">
+        <input type="date" name="start-date" id="start-date" v-model="localStartDate">
         <label for="end-date">結束日期</label>
-        <input type="date" name="end-date" id="end-date" v-model="inputEndDate">
+        <input type="date" name="end-date" id="end-date" v-model="localEndDate">
       </div>
-      <button type="submit" class="btn btn-primary"
-        @click="searchData(title, inputStartDate, inputEndDate)">search</button>
+      <button type="submit" class="btn btn-primary" @click="getData">search</button>
     </div>
     <button type="submit" class="btn btn-primary" @click="newQuestionnaire">新增問卷</button>
     <div class="questionnaire-area">
@@ -167,7 +127,7 @@ export default {
         <div class="col title" @click="getByTitle(questionnaire.title)"> {{ questionnaire.title }}</div>
         <div class="col status">
           <span v-if="new Date(questionnaire.startDate) < today &&
-            new Date(inputStartDate) < new Date(questionnaire.endDate)">
+            new Date(localStartDate) < new Date(questionnaire.endDate)">
             進行中</span>
           <span v-else-if="new Date(questionnaire.endDate) < today">已結束</span>
           <span v-else-if="new Date(questionnaire.startDate) > today">未開始</span>
@@ -181,7 +141,7 @@ export default {
       <button class="page-btn page" @click="backPage" v-if="selectedIndex > 0">&#60;</button>
       <button class="page-btn page" v-for="(p, index) in page" @click="changePage(index)"
         :class="{ 'selected': selectedIndex === index }">{{ p + 1 }}</button>
-      <button class="page-btn page" @click="nextPage" v-if="selectedIndex + 1 < page.length">&#62;</button>
+      <button class="page-btn page" @click="nextPage" v-if="selectedIndex+1 < page.length">&#62;</button>
     </div>
   </div>
 </template>

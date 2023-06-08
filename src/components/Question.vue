@@ -1,6 +1,7 @@
 <script>
 export default {
     props: ["isExist", "isActive", "isEnd", "questionnaire"],
+    emits: ['goQuestionnaire'],
     data() {
         return {
             inputQuestion: "",

@@ -23,6 +23,12 @@ export default {
             console.log("進行tab");
             this.activeTab = tab;
         },
+        newQuestionnaire(newData) {
+            console.log("emit...")
+            console.log(newData)
+            this.questionnaire = newData
+            this.isExist = true;
+        }
     },
     beforeMount() {
         const sessionQuestionnaire = sessionStorage.getItem("questionnaire");
@@ -63,8 +69,9 @@ export default {
 
         <div class="tab-content">
             <div v-show="activeTab === 'questionnaire'">
-                <Questionnaire @goQuestion="changeTab" :localStartDate="localStartDate" :localEndDate="localEndDate"
-                    :title="title" :description="description" :isExist="isExist" :isActive="isActive" :isEnd="isEnd">
+                <Questionnaire @goQuestion="changeTab" @newQuestionnaire="newQuestionnaire" :localStartDate="localStartDate"
+                    :localEndDate="localEndDate" :title="title" :description="description" :isExist="isExist"
+                    :isActive="isActive" :isEnd="isEnd">
                 </Questionnaire>
             </div>
             <div v-show="activeTab === 'question'">

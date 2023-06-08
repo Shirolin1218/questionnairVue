@@ -32,7 +32,8 @@ export default {
                         alert(data.message);
                         sessionStorage.setItem("questionnaire", JSON.stringify(data.questionnaire));
                         this.refreshInput();
-                        sessionStorage.removeItem("questionList")
+                        this.$emit("newQuestionnaire", data.questionnaire);
+                        sessionStorage.removeItem("questionList");
                         this.$emit("goQuestion", "question");
                     } else {
                         alert(data.message)
@@ -97,7 +98,7 @@ export default {
                 <label for="input-description" class="col-sm-2 col-form-label">描述內容</label>
                 <div class="col-sm-10">
                     <textarea type="text" class="form-control" id="input-description" v-model="inputDescription"
-                        placeholder="問題描述..." :disabled="isEnd"></textarea>
+                        placeholder="問卷描述..." :disabled="isEnd"></textarea>
                 </div>
             </div>
             <div class="row mb-3">
