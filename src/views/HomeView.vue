@@ -117,6 +117,18 @@ export default {
         this.changePage(this.selectedIndex + 1)
       }
     },
+    checkStart() {
+      console.log("check")
+      if (new Date(this.inputStartDate) > new Date(this.inputEndDate)) {
+        this.inputEndDate = null;
+      }
+    },
+    checkEnd() {
+      console.log("check")
+      if (new Date(this.inputStartDate) > new Date(this.inputEndDate)) {
+        this.inputStartDate = null;
+      }
+    }
   },
   mounted() {
     fetch("http://localhost:8080/getHowManyData", {
@@ -147,9 +159,9 @@ export default {
       </div>
       <div class="search date">
         <label for="start-date">開始日期</label>
-        <input type="date" name="start-date" id="start-date" v-model="inputStartDate">
+        <input type="date" name="start-date" id="start-date" v-model="inputStartDate" @input="checkStart">
         <label for="end-date">結束日期</label>
-        <input type="date" name="end-date" id="end-date" v-model="inputEndDate">
+        <input type="date" name="end-date" id="end-date" v-model="inputEndDate" @input="checkEnd">
       </div>
       <button type="submit" class="btn btn-primary"
         @click="setCondition(title, inputStartDate, inputEndDate)">search</button>
@@ -167,11 +179,11 @@ export default {
       </div>
       <div class="row" v-for="(questionnaire, index) in questionnaireList">
         <div class="col check"> <input type="checkbox"> </div>
-        <div class="col number"> {{ questionnaire.id }} </div>
+        <div class="col number"> {{ questionnaire.questionnaireId }} </div>
         <div class="col title" @click="getByTitle(questionnaire.title)"> {{ questionnaire.title }}</div>
         <div class="col status">
           <span v-if="new Date(questionnaire.startDate) < today &&
-            new Date(questionnaire.startDate) < new Date(questionnaire.endDate)">
+            new Date(questionnaire.startDate) < new Date(questionnaire.endDate)&&new Date(questionnaire.endDate) > today">
             進行中</span>
           <span v-else-if="new Date(questionnaire.endDate) < today">已結束</span>
           <span v-else-if="new Date(questionnaire.startDate) > today">未開始</span>

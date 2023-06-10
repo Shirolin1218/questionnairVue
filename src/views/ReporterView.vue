@@ -20,7 +20,7 @@ export default {
     getData() {
       //依條件進行搜尋的方法
     },
-    getByTitle(title) {
+    goQuestionnaire(title) {
       fetch("http://localhost:8080/findByTitle", {
         method: "POST",
         headers: {
@@ -45,7 +45,7 @@ export default {
           }).then(res => res.json())
             .then(data => {
               sessionStorage.setItem("questionList", JSON.stringify(data))
-              this.$router.push("/manage")
+              this.$router.push("/write")
             }).catch(err => alert(err))
         })
     },
@@ -113,7 +113,6 @@ export default {
     <button type="submit" class="btn btn-primary" @click="newQuestionnaire">新增問卷</button>
     <div class="questionnaire-area">
       <div class="row row-header">
-        <div class="col check"> </div>
         <div class="col number"># </div>
         <div class="col head-title ">問卷標題 </div>
         <div class="col status">狀態 </div>
@@ -122,9 +121,13 @@ export default {
         <div class="col report"> 統計 </div>
       </div>
       <div class="row" v-for="(questionnaire, index) in questionnaireList">
-        <div class="col check"> <input type="checkbox"> </div>
-        <div class="col number"> {{ questionnaire.id }} </div>
-        <div class="col title" @click="getByTitle(questionnaire.title)"> {{ questionnaire.title }}</div>
+        <div class="col number"> {{ questionnaire.questionnaireId }} </div>
+        <div class="col title" 
+          @click="goQuestionnaire(questionnaire.title)" :class="{
+          'no-click': !(new Date(questionnaire.startDate) < today && today < new Date(questionnaire.endDate))
+          }"> 
+          {{ questionnaire.title }}
+        </div>
         <div class="col status">
           <span v-if="new Date(questionnaire.startDate) < today &&
             new Date(localStartDate) < new Date(questionnaire.endDate)">
@@ -141,7 +144,7 @@ export default {
       <button class="page-btn page" @click="backPage" v-if="selectedIndex > 0">&#60;</button>
       <button class="page-btn page" v-for="(p, index) in page" @click="changePage(index)"
         :class="{ 'selected': selectedIndex === index }">{{ p + 1 }}</button>
-      <button class="page-btn page" @click="nextPage" v-if="selectedIndex+1 < page.length">&#62;</button>
+      <button class="page-btn page" @click="nextPage" v-if="selectedIndex + 1 < page.length">&#62;</button>
     </div>
   </div>
 </template>
@@ -200,6 +203,11 @@ export default {
         color: white;
         background-color: cornflowerblue
       }
+    }
+
+    .no-click {
+      pointer-events: none;
+      opacity: 0.7;
     }
 
     .status {

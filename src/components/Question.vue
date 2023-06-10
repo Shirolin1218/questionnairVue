@@ -4,7 +4,7 @@ export default {
     emits: ['goQuestionnaire'],
     data() {
         return {
-            inputQuestion: "",
+            inputQuestionTitle: "",
             inputOption: "",
             inputType: "single",
             isRequired: false,
@@ -16,17 +16,17 @@ export default {
     },
     methods: {
         newQuestion() {
-            if (!this.inputQuestion) {
+            if (!this.inputQuestionTitle) {
                 alert("請輸入題目標題");
                 return;
             }
-            if (this.questionList.some(question => question.title === this.inputQuestion)) {
+            if (this.questionList.some(question => question.title === this.inputQuestionTitle)) {
                 alert("題目重複");
                 return;
             }
             const question = {
-                questionnaire: JSON.parse(sessionStorage.getItem("questionnaire")),
-                title: this.inputQuestion,
+                questionnaire: this.questionnaire,
+                title: this.inputQuestionTitle,
                 type: this.inputType,
                 required: this.isRequired,
             }
@@ -35,9 +35,9 @@ export default {
             this.tempOptionList.forEach(optionName => {
                 if (optionName) {
                     const option = {
-                        questionnaire: JSON.parse(sessionStorage.getItem("questionnaire")),
+                        questionnaire: this.questionnaire,
                         question: {
-                            title: this.inputQuestion
+                            title: this.inputQuestionTitle
                         },
                         optionName: optionName
                     }
@@ -45,7 +45,7 @@ export default {
                 }
             })
             this.tempOptionList = [""];
-            this.inputQuestion = ""
+            this.inputQuestionTitle = ""
         },
         updateOption(index, value) {
             this.tempOptionList[index] = value;
@@ -71,6 +71,8 @@ export default {
                 .then(res => res.json())
                 .then(data => {
                     if (data.code === "200") {
+                        alert(data.message)
+                        this.questionList = data.questionList
                         sessionStorage.setItem("questionList", JSON.stringify(this.questionList));
                         const optionBody = {
                             optionList: this.optionList
@@ -85,10 +87,12 @@ export default {
                         })
                             .then(res => res.json())
                             .then(data => {
+                                console.log(data)
                                 if (data.message === "200") {
+                                    this.tempOptionList = [];
+                                    this.optionList = data.optionList
                                     alert(data.message)
-                                } else {
-                                    alert(data.message)
+                                    location.reload();
                                 }
                             }).catch(err => alert(err))
                     } else {
@@ -109,8 +113,7 @@ export default {
             }).then(res => res.json())
                 .then(data => {
                     console.log(data);
-                    this.optionList = data;
-                    this.inputQuestion = question.title;
+                    this.inputQuestionTitle = question.title;
                     this.inputType = question.type;
                     this.isRequired = question.required
                     this.tempOptionList = data.map(option => option.optionName);
@@ -135,22 +138,23 @@ export default {
                         })
                         this.selectedQuestionList = [];
                         sessionStorage.setItem("questionList", JSON.stringify(this.questionList))
+                        alert(data.message);
                     });
                 // 清空 selectedQuestions 陣列
 
             }
         },
         cancel() {
-            this.$router.push("/")
+            if (confirm("系統可能不會儲存你的內容")) {
+                this.questionList = [];
+                this.$router.push("/")
+            }
         },
         checkType(inputType) {
             if (inputType === "input") {
                 this.tempOptionList = [""];
             }
         },
-        test(){
-            console.log(this.questionnaire)
-        }
     },
     created() {
         if (sessionStorage.getItem("questionList")) {
@@ -164,14 +168,14 @@ export default {
         <form>
             <div class="row mb-3">
                 <label for="input-questionnaire" class="col-sm-2 col-form-label">問卷標題</label>
-                <input type="text" class="form-control" id="input-questionnaire" disabled="true" :value="questionnaire.title"
-                    placeholder="請選取或新增一個問卷">
+                <input type="text" class="form-control" id="input-questionnaire" disabled="true"
+                    :value="questionnaire.title" placeholder="請選取或新增一個問卷">
             </div>
             <div class="row mb-3">
                 <label for="input-question" class="col-sm-1 col-form-label">問題</label>
                 <div class="col-sm-10 question-input-area">
-                    <input type="text" class="form-control" id="input-question" v-model="inputQuestion" placeholder="請輸入問題"
-                        :disabled="isActive">
+                    <input type="text" class="form-control" id="input-question" v-model="inputQuestionTitle"
+                        placeholder="請輸入問題" :disabled="isActive">
                     <select name="" id="" v-model="inputType" :disabled="isActive" @input="checkType(inputType)">
                         <option value="single">單選</option>
                         <option value="multiple">多選</option>
@@ -219,7 +223,7 @@ export default {
                 </div>
             </div>
             <div class="btn-area" v-if="!isActive">
-                <button type="submit" class="btn btn-secondary" @click="cancel" :disabled="isActive">取消</button>
+                <button type="button" class="btn btn-secondary" @click="cancel" :disabled="isActive">取消</button>
                 <button type="button" class="btn btn-primary " @click="submitRequest" :disabled="isActive">送出</button>
             </div>
         </form>
@@ -230,7 +234,7 @@ export default {
     border: 1px solid black;
     padding: 16px;
     width: 768px;
-    height: 516px;
+    min-height: 516px;
 
     .question-input-area {
         position: relative;
