@@ -47,7 +47,7 @@ export default {
             this.tempOptionList = [""];
             this.inputQuestionTitle = ""
         },
-        updateOption(index, value) {
+        changeOptionInput(index, value) {
             this.tempOptionList[index] = value;
             if (!this.tempOptionList[index]) {
                 this.tempOptionList.splice(index, 1)
@@ -119,7 +119,7 @@ export default {
                     this.tempOptionList = data.map(option => option.optionName);
                 }).catch(err => alert(err))
         },
-        delTempOption() {
+        delOption() {
             console.log("del!")
             if (confirm("確定要刪除選取的項目嗎？")) {
                 const body = {
@@ -141,12 +141,12 @@ export default {
                         alert(data.message);
                     });
                 // 清空 selectedQuestions 陣列
-
             }
         },
         cancel() {
             if (confirm("系統可能不會儲存你的內容")) {
                 this.questionList = [];
+                sessionStorage.removeItem("manageActiveTab")
                 this.$router.push("/")
             }
         },
@@ -157,8 +157,8 @@ export default {
         },
     },
     created() {
-        if (sessionStorage.getItem("questionList")) {
-            this.questionList = JSON.parse(sessionStorage.getItem("questionList"));
+        if (sessionStorage.getItem("questionData")) {
+            this.questionList = JSON.parse(sessionStorage.getItem("questionData"));
         }
     },
 }
@@ -191,12 +191,12 @@ export default {
                 <label>選項</label>
                 <div class="options">
                     <input type="text" class="input-option" placeholder="請輸入選項" v-for="(option, index) in tempOptionList"
-                        :value="option" @input="updateOption(index, $event.target.value)" :disabled="isActive"
+                        :value="option" @input="changeOptionInput(index, $event.target.value)" :disabled="isActive"
                         v-if="inputType !== 'input'">
                 </div>
             </div>
             <div class="question-area">
-                <i class="del-icon fa-solid fa-trash-can fa-xl" @click="delTempOption" v-if="!isActive"></i>
+                <i class="del-icon fa-solid fa-trash-can fa-xl" @click="delOption" v-if="!isActive"></i>
                 <div class="row row-header">
                     <div class="col check"> </div>
                     <div class="col number"># </div>

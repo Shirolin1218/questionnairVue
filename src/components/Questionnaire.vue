@@ -66,6 +66,7 @@ export default {
                 })
         },
         cancel() {
+            sessionStorage.removeItem("manageActiveTab")
             this.$router.push("/")
         },
         refreshInput() {

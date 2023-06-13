@@ -13,10 +13,6 @@ export default {
     }
   },
   methods: {
-    newQuestionnaire() {
-      sessionStorage.removeItem("questionnaire")
-      this.$router.push("/manage")
-    },
     getData() {
       //依條件進行搜尋的方法
     },
@@ -33,7 +29,7 @@ export default {
           if (data.code === "200") {
             sessionStorage.setItem("questionnaire", JSON.stringify(data.questionnaire));
           } else {
-            alert(data.message)
+            alert(data.message);
           }
         }).then(() => {
           fetch("http://localhost:8080/findQuestionsByQuestionnaire", {
@@ -44,8 +40,9 @@ export default {
             body: sessionStorage.getItem("questionnaire")
           }).then(res => res.json())
             .then(data => {
-              sessionStorage.setItem("questionList", JSON.stringify(data))
-              this.$router.push("/write")
+              sessionStorage.setItem("questionData", JSON.stringify(data));
+              sessionStorage.setItem("reportReadonly", false);
+              this.$router.push("/write");
             }).catch(err => alert(err))
         })
     },
@@ -110,7 +107,6 @@ export default {
       </div>
       <button type="submit" class="btn btn-primary" @click="getData">search</button>
     </div>
-    <button type="submit" class="btn btn-primary" @click="newQuestionnaire">新增問卷</button>
     <div class="questionnaire-area">
       <div class="row row-header">
         <div class="col number"># </div>
@@ -120,12 +116,11 @@ export default {
         <div class="col end">結束日期 </div>
         <div class="col report"> 統計 </div>
       </div>
-      <div class="row" v-for="(questionnaire, index) in questionnaireList">
+      <div class="row" v-for="(questionnaire, index) in questionnaireList" :class="{
+        'no-click': !(new Date(questionnaire.startDate) < today && today < new Date(questionnaire.endDate))
+      }">
         <div class="col number"> {{ questionnaire.questionnaireId }} </div>
-        <div class="col title" 
-          @click="goQuestionnaire(questionnaire.title)" :class="{
-          'no-click': !(new Date(questionnaire.startDate) < today && today < new Date(questionnaire.endDate))
-          }"> 
+        <div class="col title" @click="goQuestionnaire(questionnaire.title)">
           {{ questionnaire.title }}
         </div>
         <div class="col status">
@@ -205,10 +200,7 @@ export default {
       }
     }
 
-    .no-click {
-      pointer-events: none;
-      opacity: 0.7;
-    }
+
 
     .status {
       max-width: 84px;
@@ -221,6 +213,14 @@ export default {
     .end {
       min-width: 128px;
     }
+    .report{
+      border: none;
+    }
+  }
+
+  .no-click {
+    pointer-events: none;
+    opacity: 0.7;
   }
 
 

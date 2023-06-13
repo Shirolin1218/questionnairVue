@@ -1,8 +1,9 @@
 <script>
 import Questionnaire from '../components/Questionnaire.vue';
 import Question from '../components/Question.vue';
+import Reporter from '../components/Reporter.vue';
 export default {
-    components: { Questionnaire, Question, },
+    components: { Questionnaire, Question, Reporter, },
     data() {
         const today = new Date();
         const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -28,6 +29,10 @@ export default {
             console.log(newData)
             this.questionnaire = newData
             this.isExist = true;
+        },
+        backHome() {
+            sessionStorage.removeItem("manageActiveTab")
+            this.$router.push("/")
         }
     },
     beforeMount() {
@@ -42,6 +47,11 @@ export default {
             this.isActive = new Date(questionnaire.startDate) < new Date();
             this.isEnd = new Date(questionnaire.endDate) < new Date() && new Date(questionnaire.startDate) < new Date();
             this.questionnaire = questionnaire;
+        }
+    },
+    mounted() {
+        if (sessionStorage.getItem("manageActiveTab")) {
+            this.activeTab = sessionStorage.getItem("manageActiveTab");
         }
     },
 }
@@ -63,7 +73,7 @@ export default {
                 <a class="nav-link" :class="{ active: activeTab === 'statistic' }" @click="activeTab = 'statistic'">統計</a>
             </li>
             <li class="nav-item">
-                <p class="nav-link" @click="() => this.$router.push('/')">返回</p>
+                <p class="nav-link" @click="backHome">返回</p>
             </li>
         </ul>
 
@@ -80,10 +90,10 @@ export default {
                 </Question>
             </div>
             <div v-show="activeTab === 'report'">
-                <h1>問卷回饋未完成</h1> 
+                <Reporter :isExist="isExist" :isActive="isActive" :isEnd="isEnd" :questionnaire="questionnaire"></Reporter>
             </div>
             <div v-show="activeTab === 'statistic'">
-                <h1>統計未完成</h1> 
+                <h1>統計未完成</h1>
             </div>
         </div>
     </div>

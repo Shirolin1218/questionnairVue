@@ -16,7 +16,8 @@ export default {
         startDate: null,
         endDate: null,
         isActive: false,
-      }
+      },
+      questionnaire: {},
     }
   },
   methods: {
@@ -70,23 +71,51 @@ export default {
         .then(res => res.json())
         .then(data => {
           if (data.code === "200") {
+            this.questionnaire = data.questionnaire;
+            console.log(this.questionnaire);
             sessionStorage.setItem("questionnaire", JSON.stringify(data.questionnaire));
           } else {
             alert(data.message)
           }
-        }).then(() => {
-          fetch("http://localhost:8080/findQuestionsByQuestionnaire", {
+        })
+        .then(() => {
+          const reporterBody = {
+            questionnaire: this.questionnaire,
+            page: 0
+          };
+
+          const fetchQuestionData = fetch("http://localhost:8080/findQuestionsByQuestionnaire", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: sessionStorage.getItem("questionnaire")
-          }).then(res => res.json())
+            body: JSON.stringify(this.questionnaire)
+          })
+            .then(res => res.json())
             .then(data => {
-              sessionStorage.setItem("questionList", JSON.stringify(data))
-              this.$router.push("/manage")
-            }).catch(err => alert(err))
-        })
+              sessionStorage.setItem("questionData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
+
+          const fetchReporterData = fetch("http://localhost:8080/findReportersByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(reporterBody)
+          })
+            .then(res => res.json())
+            .then(data => {
+              console.log(data);
+              sessionStorage.setItem("reporterData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
+
+          Promise.all([fetchQuestionData, fetchReporterData])
+            .then(() => {
+              this.$router.push("/manage");
+            });
+        });
     },
     changePage(index) {
       if (!this.searchCondition.isActive) {
@@ -128,6 +157,9 @@ export default {
       if (new Date(this.inputStartDate) > new Date(this.inputEndDate)) {
         this.inputStartDate = null;
       }
+    },
+    goReport() {
+      this.$router.push("/reporter");
     }
   },
   mounted() {
@@ -178,12 +210,13 @@ export default {
         <div class="col report"> 統計 </div>
       </div>
       <div class="row" v-for="(questionnaire, index) in questionnaireList">
-        <div class="col check"> <input type="checkbox"> </div>
+        <div class="col check"> <input type="checkbox" :id="questionnaire.questionnaireId"> </div>
         <div class="col number"> {{ questionnaire.questionnaireId }} </div>
         <div class="col title" @click="getByTitle(questionnaire.title)"> {{ questionnaire.title }}</div>
         <div class="col status">
-          <span v-if="new Date(questionnaire.startDate) < today &&
-            new Date(questionnaire.startDate) < new Date(questionnaire.endDate)&&new Date(questionnaire.endDate) > today">
+          <span
+            v-if="new Date(questionnaire.startDate) < today &&
+              new Date(questionnaire.startDate) < new Date(questionnaire.endDate) && new Date(questionnaire.endDate) > today">
             進行中</span>
           <span v-else-if="new Date(questionnaire.endDate) < today">已結束</span>
           <span v-else-if="new Date(questionnaire.startDate) > today">未開始</span>
@@ -199,6 +232,7 @@ export default {
         :class="{ 'selected': selectedIndex === index }">{{ p + 1 }}</button>
       <button class="page-btn page" @click="nextPage" v-if="selectedIndex + 1 < page.length">&#62;</button>
     </div>
+    <button @click="goReport">test</button>
   </div>
 </template>
 <style lang="scss" scoped>
@@ -210,13 +244,13 @@ export default {
   border: 1px black solid;
   border-radius: 12px;
   height: 168px;
-  min-width: 768px;
+  min-width: 912px;
 }
 
 .questionnaire-area {
   margin-top: 48px;
   border: 1px black solid;
-  min-width: 768px;
+  min-width: 912px;
   height: 268px;
 
   .row-header {
@@ -268,6 +302,11 @@ export default {
 
     .end {
       min-width: 128px;
+    }
+
+    .report {
+      min-width: 128px;
+      border: none;
     }
   }
 
