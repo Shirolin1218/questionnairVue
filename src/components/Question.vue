@@ -213,7 +213,6 @@ export default {
                     results.forEach(data => {
                         this.optionList.push(...data);
                     });
-                    console.log(this.optionList);
                 })
                 .catch(err => alert(err));
         }

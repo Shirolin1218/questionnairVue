@@ -110,8 +110,20 @@ export default {
               sessionStorage.setItem("reporterData", JSON.stringify(data));
             })
             .catch(err => alert(err));
+          const fetchReportData = fetch("http://localhost:8080/findReportsByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(this.questionnaire)
+          })
+            .then(res => res.json())
+            .then(data => {
+              sessionStorage.setItem("reportData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
 
-          Promise.all([fetchQuestionData, fetchReporterData])
+          Promise.all([fetchQuestionData, fetchReporterData,fetchReportData])
             .then(() => {
               this.$router.push("/manage");
             });

@@ -2,8 +2,9 @@
 import Questionnaire from '../components/Questionnaire.vue';
 import Question from '../components/Question.vue';
 import Reporter from '../components/Reporter.vue';
+import Statistic from '../components/Statistic.vue';
 export default {
-    components: { Questionnaire, Question, Reporter, },
+    components: { Questionnaire, Question, Reporter, Statistic, },
     data() {
         const today = new Date();
         const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -93,7 +94,8 @@ export default {
                 <Reporter :isExist="isExist" :isActive="isActive" :isEnd="isEnd" :questionnaire="questionnaire"></Reporter>
             </div>
             <div v-show="activeTab === 'statistic'">
-                <h1>統計未完成</h1>
+                <Statistic :isExist="isExist" :isActive="isActive" :isEnd="isEnd" :questionnaire="questionnaire">
+                </Statistic>
             </div>
         </div>
     </div>
