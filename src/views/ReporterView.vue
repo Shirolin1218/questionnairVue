@@ -125,7 +125,7 @@ export default {
         </div>
         <div class="col status">
           <span v-if="new Date(questionnaire.startDate) < today &&
-            new Date(localStartDate) < new Date(questionnaire.endDate)">
+            today < new Date(questionnaire.endDate)">
             進行中</span>
           <span v-else-if="new Date(questionnaire.endDate) < today">已結束</span>
           <span v-else-if="new Date(questionnaire.startDate) > today">未開始</span>
@@ -213,7 +213,8 @@ export default {
     .end {
       min-width: 128px;
     }
-    .report{
+
+    .report {
       border: none;
     }
   }

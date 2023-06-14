@@ -21,9 +21,35 @@ export default {
                 return;
             }
             if (this.questionList.some(question => question.title === this.inputQuestionTitle)) {
-                alert("題目重複");
-                return;
+                if (confirm("是否覆蓋現有項目")) {
+                    const existQuestion = this.questionList.find(question => question.title === this.inputQuestionTitle);
+                    console.log(existQuestion)
+                    //先刪除原本optionList中的元素
+                    this.optionList = this.optionList.filter(option => {
+                        return option.question.title !== existQuestion.title;
+                    })
+                    //賦予更新後的optionList
+                    this.tempOptionList.forEach(optionName => {
+                        if (optionName) {
+                            const option = {
+                                questionnaire: this.questionnaire,
+                                question: existQuestion,
+                                optionName: optionName
+                            }
+                            this.optionList.push(option);
+                        }
+                    })
+                    this.tempOptionList = [""];
+                    this.inputQuestionTitle = ""
+                    return;
+                } else {
+                    this.inputQuestionTitle = "";
+                    this.isRequired = false;
+                    this.tempOptionList = [""];
+                    return;
+                }
             }
+
             const question = {
                 questionnaire: this.questionnaire,
                 title: this.inputQuestionTitle,
@@ -73,7 +99,7 @@ export default {
                     if (data.code === "200") {
                         alert(data.message)
                         this.questionList = data.questionList
-                        sessionStorage.setItem("questionList", JSON.stringify(this.questionList));
+                        sessionStorage.setItem("questionData", JSON.stringify(this.questionList));
                         const optionBody = {
                             optionList: this.optionList
                         }
@@ -91,7 +117,7 @@ export default {
                                 if (data.message === "200") {
                                     this.tempOptionList = [];
                                     this.optionList = data.optionList
-                                    alert(data.message)
+                                    alert(data.message);
                                     location.reload();
                                 }
                             }).catch(err => alert(err))
@@ -101,24 +127,19 @@ export default {
                     }
                 })
         },
-        editQuestion(question, index) {
+        editQuestion(question) {
             console.log(question)
-            console.log(index)
-            fetch("http://localhost:8080/findByQuestions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(question),
-            }).then(res => res.json())
-                .then(data => {
-                    console.log(data);
-                    this.inputQuestionTitle = question.title;
-                    this.inputType = question.type;
-                    this.isRequired = question.required
-                    this.tempOptionList = data.map(option => option.optionName);
-                }).catch(err => alert(err))
+            const originalOptionList = this.optionList.filter(item => {
+                return item.question.title === question.title
+            })
+            console.log(originalOptionList);
+            this.tempOptionList = originalOptionList.map(item => {
+                return item.optionName;
+            })
+            this.inputQuestionTitle = question.title;
+            this.inputType = question.type;
         },
+
         delOption() {
             console.log("del!")
             if (confirm("確定要刪除選取的項目嗎？")) {
@@ -135,12 +156,14 @@ export default {
                     .then(data => {
                         this.selectedQuestionList.forEach(question => {
                             this.questionList.splice(this.questionList.indexOf(question), 1);
+                            this.optionList = this.optionList.filter(option => {
+                                return option.question.title !== question.title
+                            })
                         })
                         this.selectedQuestionList = [];
-                        sessionStorage.setItem("questionList", JSON.stringify(this.questionList))
+                        sessionStorage.setItem("questionData", JSON.stringify(this.questionList))
                         alert(data.message);
                     });
-                // 清空 selectedQuestions 陣列
             }
         },
         cancel() {
@@ -155,12 +178,48 @@ export default {
                 this.tempOptionList = [""];
             }
         },
+        test() {
+            fetch("http://localhost:8080/findByQuestions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(question),
+            }).then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    this.inputQuestionTitle = question.title;
+                    this.inputType = question.type;
+                    this.isRequired = question.required
+                    this.tempOptionList = data.map(option => option.optionName);
+                }).catch(err => alert(err))
+        }
     },
     created() {
         if (sessionStorage.getItem("questionData")) {
             this.questionList = JSON.parse(sessionStorage.getItem("questionData"));
+            const fetchRequests = this.questionList.map(question => {
+                return fetch("http://localhost:8080/findByQuestions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(question),
+                }).then(res => res.json());
+            });
+
+            Promise.all(fetchRequests)
+                .then(results => {
+                    results.forEach(data => {
+                        this.optionList.push(...data);
+                    });
+                    console.log(this.optionList);
+                })
+                .catch(err => alert(err));
         }
+
     },
+
 }
 </script>
 <template>
@@ -225,6 +284,7 @@ export default {
             <div class="btn-area" v-if="!isActive">
                 <button type="button" class="btn btn-secondary" @click="cancel" :disabled="isActive">取消</button>
                 <button type="button" class="btn btn-primary " @click="submitRequest" :disabled="isActive">送出</button>
+                <button type="button" @click="test">test</button>
             </div>
         </form>
     </div>
