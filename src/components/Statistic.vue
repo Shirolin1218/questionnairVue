@@ -21,7 +21,6 @@ export default {
         }
     },
     methods: {
-
         changeChart() {
             if (this.statisticType === "text") {
                 this.statisticType = "pie";
@@ -177,7 +176,9 @@ export default {
                 <ul>
                     <li v-if="question.required">{{ index + 1 }}、{{ question.title }} (必填)</li>
                     <li v-else>{{ index + 1 }}、{{ question.title }} (選填)</li>
-                    <p v-for="option in question.optionList" style="margin: 12px;" v-show="statisticType === 'text'">
+                    <p v-for="option in question.optionList" style="margin: 12px;" v-show="statisticType === 'text'" v-if="reportData.filter(report => {
+                        return report.question.questionId === question.questionId
+                    }).length > 0">
                         {{ option.optionName }}：
                         {{ ((reportData.filter(report => {
                             return report.option.optionId === option.optionId
@@ -185,6 +186,7 @@ export default {
                             return report.question.questionId === question.questionId
                         }).length) * 100).toFixed(2) + '%' }}
                     </p>
+                    <p v-else>此題目尚未有人作答</p>
                     <canvas :id="'chart' + index" style="width: 128px; max-height: 256px;"
                         v-show="statisticType === 'bar'"></canvas>
                     <canvas :id="'chartPie' + index" style="width: 128px; max-height: 256px;"

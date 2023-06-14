@@ -24,6 +24,11 @@ const router = createRouter({
       name: 'Write',
       component: () => import('../views/WriteView.vue'),
     },
+    {
+      path: '/statistic',
+      name: 'Statistic',
+      component: () => import('../views/StatisticView.vue'),
+    },
   ]
 })
 

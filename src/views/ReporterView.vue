@@ -71,6 +71,75 @@ export default {
         this.changePage(this.selectedIndex + 1)
       }
     },
+    goStatistic(title) {
+      fetch("http://localhost:8080/findByTitle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: title,
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.code === "200") {
+            this.questionnaire = data.questionnaire;
+            console.log(this.questionnaire);
+            sessionStorage.setItem("questionnaire", JSON.stringify(data.questionnaire));
+          } else {
+            alert(data.message)
+          }
+        })
+        .then(() => {
+          const reporterBody = {
+            questionnaire: this.questionnaire,
+            page: 0
+          };
+
+          const fetchQuestionData = fetch("http://localhost:8080/findQuestionsByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(this.questionnaire)
+          })
+            .then(res => res.json())
+            .then(data => {
+              sessionStorage.setItem("questionData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
+
+          const fetchReporterData = fetch("http://localhost:8080/findReportersByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(reporterBody)
+          })
+            .then(res => res.json())
+            .then(data => {
+              console.log(data);
+              sessionStorage.setItem("reporterData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
+          const fetchReportData = fetch("http://localhost:8080/findReportsByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(this.questionnaire)
+          })
+            .then(res => res.json())
+            .then(data => {
+              sessionStorage.setItem("reportData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
+
+          Promise.all([fetchQuestionData, fetchReporterData, fetchReportData])
+            .then(() => {
+              this.$router.push("/statistic");
+            });
+        });
+    },
   },
   mounted() {
     fetch("http://localhost:8080/getHowManyData", {
@@ -116,23 +185,24 @@ export default {
         <div class="col end">結束日期 </div>
         <div class="col report"> 統計 </div>
       </div>
-      <div class="row" v-for="(questionnaire, index) in questionnaireList" :class="{
-        'no-click': !(new Date(questionnaire.startDate) < today && today < new Date(questionnaire.endDate))
-      }">
+      <div class="row" v-for="(questionnaire, index) in questionnaireList">
         <div class="col number"> {{ questionnaire.questionnaireId }} </div>
-        <div class="col title" @click="goQuestionnaire(questionnaire.title)">
+        <div class="col title" @click="goQuestionnaire(questionnaire.title)" :class="{
+          'no-click': !(new Date(questionnaire.startDate) < today && today < new Date(questionnaire.endDate))
+        }">
           {{ questionnaire.title }}
         </div>
-        <div class="col status">
+        <div class="col status" :class="{
+          'no-click': !(new Date(questionnaire.startDate) < today && today < new Date(questionnaire.endDate))
+        }">
           <span v-if="new Date(questionnaire.startDate) < today &&
-            today < new Date(questionnaire.endDate)">
-            進行中</span>
+            today < new Date(questionnaire.endDate)">進行中</span>
           <span v-else-if="new Date(questionnaire.endDate) < today">已結束</span>
           <span v-else-if="new Date(questionnaire.startDate) > today">未開始</span>
         </div>
         <div class="col start"> {{ questionnaire.startDate.substring(0, 10) }} </div>
         <div class="col end"> {{ questionnaire.endDate.substring(0, 10) }} </div>
-        <div class="col report"> report </div>
+        <div class="col report" @click="goStatistic(questionnaire.title)"> 觀看 </div>
       </div>
     </div>
     <div class="page-area">
@@ -216,6 +286,11 @@ export default {
 
     .report {
       border: none;
+
+      &:hover {
+        color: white;
+        background-color: cornflowerblue
+      }
     }
   }
 

@@ -123,7 +123,7 @@ export default {
             })
             .catch(err => alert(err));
 
-          Promise.all([fetchQuestionData, fetchReporterData,fetchReportData])
+          Promise.all([fetchQuestionData, fetchReporterData, fetchReportData])
             .then(() => {
               this.$router.push("/manage");
             });
@@ -172,6 +172,75 @@ export default {
     },
     goReport() {
       this.$router.push("/reporter");
+    },
+    goStatistic(title) {
+      fetch("http://localhost:8080/findByTitle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: title,
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.code === "200") {
+            this.questionnaire = data.questionnaire;
+            console.log(this.questionnaire);
+            sessionStorage.setItem("questionnaire", JSON.stringify(data.questionnaire));
+          } else {
+            alert(data.message)
+          }
+        })
+        .then(() => {
+          const reporterBody = {
+            questionnaire: this.questionnaire,
+            page: 0
+          };
+
+          const fetchQuestionData = fetch("http://localhost:8080/findQuestionsByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(this.questionnaire)
+          })
+            .then(res => res.json())
+            .then(data => {
+              sessionStorage.setItem("questionData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
+
+          const fetchReporterData = fetch("http://localhost:8080/findReportersByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(reporterBody)
+          })
+            .then(res => res.json())
+            .then(data => {
+              console.log(data);
+              sessionStorage.setItem("reporterData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
+          const fetchReportData = fetch("http://localhost:8080/findReportsByQuestionnaire", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(this.questionnaire)
+          })
+            .then(res => res.json())
+            .then(data => {
+              sessionStorage.setItem("reportData", JSON.stringify(data));
+            })
+            .catch(err => alert(err));
+
+          Promise.all([fetchQuestionData, fetchReporterData, fetchReportData])
+            .then(() => {
+              this.$router.push("/statistic");
+            });
+        });
     }
   },
   mounted() {
@@ -235,7 +304,7 @@ export default {
         </div>
         <div class="col start"> {{ questionnaire.startDate.substring(0, 10) }} </div>
         <div class="col end"> {{ questionnaire.endDate.substring(0, 10) }} </div>
-        <div class="col report"> report未完成 </div>
+        <div class="col report" @click="goStatistic(questionnaire.title)"> 觀看 </div>
       </div>
     </div>
     <div class="page-area">
@@ -244,7 +313,7 @@ export default {
         :class="{ 'selected': selectedIndex === index }">{{ p + 1 }}</button>
       <button class="page-btn page" @click="nextPage" v-if="selectedIndex + 1 < page.length">&#62;</button>
     </div>
-    <button @click="goReport">test</button>
+    <button @click="goReport">填問卷</button>
   </div>
 </template>
 <style lang="scss" scoped>
@@ -319,6 +388,12 @@ export default {
     .report {
       min-width: 128px;
       border: none;
+      cursor: pointer;
+
+      &:hover {
+        color: white;
+        background-color: cornflowerblue
+      }
     }
   }
 
